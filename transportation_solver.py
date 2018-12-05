@@ -22,11 +22,30 @@ def compute_objective(v, problem):
 def compute_lower_bound(v, problem):
     if len(v) == problem['n']:
         return compute_objective(v, problem)
-    return float('inf')
+
+    objective = 0
+    time = problem['delays_matrix'][0][v[0]]
+    if time > problem['limits'][v[0] - 1]:
+        objective += 1
+
+    for i in range(1, len(v)):
+        time += problem['delays_matrix'][v[i - 1]][v[i]]
+        if time > problem['limits'][v[i] - 1]:
+            objective += 1
+
+    not_visited = [i for i in range(1, problem['n'] + 1) if not i in v]
+    for i in not_visited:
+        if time + problem['delays_matrix'][v[-1]][i] > problem['limits'][i - 1]:
+            objective += 1
+
+    return objective
 
 def compute_upper_bound(v, problem):
     if len(v) == problem['n']:
         return compute_objective(v, problem)
+
+    time_elapsed = problem['delays_matrix'][0][v[0]]
+
     return float('inf')
 
 def branch(v, n):
@@ -44,22 +63,27 @@ def solve_transportation(problem):
     vertexes.put(([], float('-inf'), float('-inf')))
     best_point = ([], float('inf'), float('inf'))
     n = problem['n']
+    best_upper_bound = float('inf')
+    iters = 0
 
     while not vertexes.empty():
+        iters += 1
         v = vertexes.get()
 
         if len(v[0]) == n:
-            obj = compute_objective(v[0], problem)
-            if obj < best_point[1]:
-                best_point = (v[0], obj, obj)
+            assert v[1] == v[2]
+            if v[1] < best_point[1]:
+                best_point = v
         else:
             new_v = branch(v[0], n)
             for v in new_v:
                 lower = compute_lower_bound(v, problem)
                 upper = compute_upper_bound(v, problem)
-                if not (lower > best_point[2]):
+                best_upper_bound = min(best_upper_bound, upper)
+                if not (lower > best_upper_bound):
                     vertexes.put((v, lower, upper))
 
+    print('Iterations performed: {}'.format(iters))
     return best_point[1], best_point[0]
 
 def main(args):
