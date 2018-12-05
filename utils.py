@@ -1,9 +1,12 @@
+import os
+
 def list_to_ints(lst):
     return [int(x) for x in lst]
 
 def load_problem(path):
     with open(path) as f:
         problem = {}
+        problem['name'] = os.path.splitext(os.path.basename(path))[0]
         data = [line.strip() for line in f.readlines()]
         assert data
         problem['n'] = int(data[0])
