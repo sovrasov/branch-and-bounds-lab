@@ -54,7 +54,7 @@ def compute_upper_bound(v, problem):
         best_idx = w.index(min(w))
         v_.append(not_visited[best_idx])
 
-    return compute_objective(v_, problem)
+    return v_, compute_objective(v_, problem)
 
 def branch(v, n):
     assert len(v) <= n
@@ -74,10 +74,10 @@ def solve_transportation(problem, branch_strategy='breadth-first'):
     elif branch_strategy == 'depth-first':
         vertexes = queue.LifoQueue()
 
-    vertexes.put(([], float('-inf'), float('-inf')))
-    best_point = ([], float('inf'), float('inf'))
     n = problem['n']
-    best_upper_bound = float('inf')
+    vertexes.put(([], n, n))
+    best_point = ([], n, n)
+    best_upper_bound = n
     iters = 0
 
     while not vertexes.empty():
@@ -92,9 +92,15 @@ def solve_transportation(problem, branch_strategy='breadth-first'):
             new_v = branch(v[0], n)
             for v in new_v:
                 lower = compute_lower_bound(v, problem)
-                upper = compute_upper_bound(v, problem)
+                if len(v) < n:
+                    v_, upper = compute_upper_bound(v, problem)
+                    assert len(v_) == n
+                    if upper < best_point[1]:
+                        best_point = (v_, upper, upper)
+                else:
+                    upper = lower
                 best_upper_bound = min(best_upper_bound, upper)
-                if not (lower > best_upper_bound):
+                if not (lower >= best_upper_bound):
                     vertexes.put((v, lower, upper))
 
     print('Iterations performed: {}'.format(iters))
