@@ -4,35 +4,29 @@ import queue
 
 from utils import load_problem
 
-
-def compute_objective(v, problem):
-    assert len(v) == problem['n']
-
-    objective = 0
-    time = problem['delays_matrix'][0][v[0]]
-    if time > problem['limits'][v[0] - 1]:
-        objective += 1
-    for i in range(1, problem['n']):
-        time += problem['delays_matrix'][v[i - 1]][v[i]]
-        if time > problem['limits'][v[i] - 1]:
-            objective += 1
-
-    return objective
-
-def compute_lower_bound(v, problem):
-    if len(v) == problem['n']:
-        return compute_objective(v, problem)
+def compute_partial_objective(v, problem):
+    assert v
 
     objective = 0
     time = problem['delays_matrix'][0][v[0]]
     if time > problem['limits'][v[0] - 1]:
         objective += 1
-
     for i in range(1, len(v)):
         time += problem['delays_matrix'][v[i - 1]][v[i]]
         if time > problem['limits'][v[i] - 1]:
             objective += 1
 
+    return time, objective
+
+def compute_objective(v, problem):
+    assert len(v) == problem['n']
+    return compute_partial_objective(v, problem)[1]
+
+def compute_lower_bound(v, problem):
+    if len(v) == problem['n']:
+        return compute_objective(v, problem)
+
+    time, objective = compute_partial_objective(v, problem)
     not_visited = [i for i in range(1, problem['n'] + 1) if not i in v]
     for i in not_visited:
         if time + problem['delays_matrix'][v[-1]][i] > problem['limits'][i - 1]:
@@ -44,9 +38,23 @@ def compute_upper_bound(v, problem):
     if len(v) == problem['n']:
         return compute_objective(v, problem)
 
-    time_elapsed = problem['delays_matrix'][0][v[0]]
+    v_ = v.copy()
 
-    return float('inf')
+    while len(v_) < problem['n']:
+        not_visited = [i for i in range(1, problem['n'] + 1) if not i in v_]
+        w = []
+        z, _ = compute_partial_objective(v_, problem)
+        for beta in not_visited:
+            t_d = problem['limits'][beta - 1]
+            t = z + problem['delays_matrix'][v[-1]][beta]
+            if t > t_d:
+                w.append(float('inf'))
+            else:
+                w.append(t_d - t)
+        best_idx = w.index(min(w))
+        v_.append(not_visited[best_idx])
+
+    return compute_objective(v_, problem)
 
 def branch(v, n):
     assert len(v) <= n
@@ -58,8 +66,14 @@ def branch(v, n):
 
     return new_nodes
 
-def solve_transportation(problem):
-    vertexes = queue.Queue()
+branch_strategies = ['breadth-first', 'depth-first', 'optim', 'real']
+
+def solve_transportation(problem, branch_strategy='breadth-first'):
+    if branch_strategy == 'breadth-first':
+        vertexes = queue.Queue()
+    elif branch_strategy == 'depth-first':
+        vertexes = queue.LifoQueue()
+
     vertexes.put(([], float('-inf'), float('-inf')))
     best_point = ([], float('inf'), float('inf'))
     n = problem['n']
@@ -88,20 +102,20 @@ def solve_transportation(problem):
 
 def main(args):
     problems = []
-    for file in os.listdir(args.problems_dir):
+    for file in sorted(os.listdir(args.problems_dir)):
         if file.endswith('.txt'):
             problems.append(load_problem(os.path.join(args.problems_dir, file)))
 
     for problem in problems:
-        value, order = solve_transportation(problem)
         print('Problem: ' + problem['name'])
+        value, order = solve_transportation(problem, args.branch_strategy)
         print('Found solution: {}'.format(order))
         print('Criterion value: {}'.format(value))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Transportation problems solver')
     parser.add_argument('--problems_dir', type=str, default='./problems')
-    parser.add_argument('--branch_strategy', type=str, choices=['breadth-first', 'depth-fist'], default='breadth-first')
+    parser.add_argument('--branch_strategy', type=str, choices=branch_strategies, default='breadth-first')
     parser.add_argument('--verbose', action='store_true', help='Print additional info to console')
 
     main(parser.parse_args())
