@@ -1,10 +1,76 @@
-import argparse
-import os
 import queue
 import math
-import json
+import abc
 
-from utils import load_problem
+class branch_strategy:
+    def __init__(self):
+        pass
+
+    @abc.abstractmethod
+    def put(self, v):
+        pass
+
+    @abc.abstractmethod
+    def get(self):
+        pass
+
+    @abc.abstractmethod
+    def empty(self):
+        pass
+
+class breadth_first(branch_strategy):
+    def __init__(self):
+        self.storage = queue.Queue()
+
+    def put(self, v):
+        self.storage.put(v)
+
+    def get(self):
+        return self.storage.get()
+
+    def empty(self):
+        return self.storage.empty()
+
+class depth_first(branch_strategy):
+    def __init__(self):
+        self.storage = queue.LifoQueue()
+
+    def put(self, v):
+        self.storage.put(v)
+
+    def get(self):
+        return self.storage.get()
+
+    def empty(self):
+        return self.storage.empty()
+
+class optimistic(branch_strategy):
+    def __init__(self):
+        self.storage = queue.PriorityQueue()
+
+    def empty(self):
+        return self.storage.empty()
+
+    def get(self):
+        key, v = self.storage.get()
+        return v
+
+    def put(self, v):
+        self.storage.put((v[1], v))
+
+class realistic(branch_strategy):
+    def __init__(self):
+        self.storage = queue.PriorityQueue()
+
+    def empty(self):
+        return self.storage.empty()
+
+    def get(self):
+        key, v = self.storage.get()
+        return v
+
+    def put(self, v):
+        self.storage.put((v[2], v))
 
 def compute_partial_objective(v, problem):
     assert v
@@ -74,9 +140,13 @@ def solve_transportation(problem, branch_strategy='breadth-first',
                          compute_lower_bound=compute_lower_bound_parallel,
                          compute_upper_bound=compute_upper_bound_greedy):
     if branch_strategy == 'breadth-first':
-        vertexes = queue.Queue()
+        vertexes = breadth_first()
     elif branch_strategy == 'depth-first':
-        vertexes = queue.LifoQueue()
+        vertexes = depth_first()
+    elif branch_strategy == 'optim':
+        vertexes = optimistic()
+    elif branch_strategy == 'real':
+        vertexes = realistic()
 
     n = problem['n']
     vertexes.put(([], n, n))
@@ -108,42 +178,3 @@ def solve_transportation(problem, branch_strategy='breadth-first',
                     vertexes.put((v, lower, upper))
 
     return best_point[1], best_point[0], iters
-
-def main(args):
-    problems = []
-    for file in sorted(os.listdir(args.problems_dir)):
-        if file.endswith('.txt'):
-            problems.append(load_problem(os.path.join(args.problems_dir, file)))
-
-    results = []
-    t_values = []
-    for problem in problems:
-        print('-'*100)
-        print('Problem: ' + problem['name'])
-        value, order, iters = solve_transportation(problem, args.branch_strategy)
-        t_values.append(1. - float(iters) / math.factorial(problem['n']))
-        print('Found solution: {}'.format(order))
-        print('Criterion value: {}'.format(value))
-        print('T={}'.format(t_values[-1]))
-
-        results.append({'problem_name': problem['name'],
-                        'opt_value': value,
-                        'solution': order,
-                        'T': t_values[-1]})
-
-        assert value == problem['opt_value']
-
-    t_avg = sum(t_values) / len(t_values)
-    print('T_avg={}'.format(t_avg))
-    if args.output_log:
-        with open(args.output_log, 'w') as f:
-            json.dump(results, f)
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Transportation problems solver')
-    parser.add_argument('--problems_dir', type=str, default='./problems')
-    parser.add_argument('--branch_strategy', type=str, choices=branch_strategies, default='breadth-first')
-    parser.add_argument('--output_log', type=str, default='')
-    parser.add_argument('--verbose', action='store_true', help='Print additional info to console')
-
-    main(parser.parse_args())
