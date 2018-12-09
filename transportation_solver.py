@@ -40,7 +40,7 @@ def compute_upper_bound_greedy(v, problem):
     if len(v) == problem['n']:
         return compute_objective(v, problem)
 
-    v_ = v.copy()
+    v_ = list(v)
 
     while len(v_) < problem['n']:
         not_visited = [i for i in range(1, problem['n'] + 1) if not i in v_]
@@ -121,14 +121,14 @@ def main(args):
         print('-'*100)
         print('Problem: ' + problem['name'])
         value, order, iters = solve_transportation(problem, args.branch_strategy)
-        t_values.append(1. - iters / math.factorial(problem['n']))
+        t_values.append(1. - float(iters) / math.factorial(problem['n']))
         print('Found solution: {}'.format(order))
         print('Criterion value: {}'.format(value))
         print('T={}'.format(t_values[-1]))
 
         results.append({'problem_name': problem['name'],
                         'opt_value': value,
-                        'solution': order
+                        'solution': order,
                         'T': t_values[-1]})
 
         assert value == problem['opt_value']
