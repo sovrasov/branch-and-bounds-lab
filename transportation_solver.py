@@ -2,6 +2,7 @@ import argparse
 import os
 import queue
 import math
+import json
 
 from utils import load_problem
 
@@ -23,7 +24,7 @@ def compute_objective(v, problem):
     assert len(v) == problem['n']
     return compute_partial_objective(v, problem)[1]
 
-def compute_lower_bound(v, problem):
+def compute_lower_bound_parallel(v, problem):
     if len(v) == problem['n']:
         return compute_objective(v, problem)
 
@@ -35,7 +36,7 @@ def compute_lower_bound(v, problem):
 
     return objective
 
-def compute_upper_bound(v, problem):
+def compute_upper_bound_greedy(v, problem):
     if len(v) == problem['n']:
         return compute_objective(v, problem)
 
@@ -69,7 +70,9 @@ def branch(v, n):
 
 branch_strategies = ['breadth-first', 'depth-first', 'optim', 'real']
 
-def solve_transportation(problem, branch_strategy='breadth-first'):
+def solve_transportation(problem, branch_strategy='breadth-first',
+                         compute_lower_bound=compute_lower_bound_parallel,
+                         compute_upper_bound=compute_upper_bound_greedy):
     if branch_strategy == 'breadth-first':
         vertexes = queue.Queue()
     elif branch_strategy == 'depth-first':
@@ -112,21 +115,35 @@ def main(args):
         if file.endswith('.txt'):
             problems.append(load_problem(os.path.join(args.problems_dir, file)))
 
+    results = []
+    t_values = []
     for problem in problems:
         print('-'*100)
         print('Problem: ' + problem['name'])
         value, order, iters = solve_transportation(problem, args.branch_strategy)
-        effectiveness = 1. - iters / math.factorial(problem['n'])
+        t_values.append(1. - iters / math.factorial(problem['n']))
         print('Found solution: {}'.format(order))
         print('Criterion value: {}'.format(value))
-        print('T={}'.format(effectiveness))
+        print('T={}'.format(t_values[-1]))
+
+        results.append({'problem_name': problem['name'],
+                        'opt_value': value,
+                        'solution': order
+                        'T': t_values[-1]})
 
         assert value == problem['opt_value']
+
+    t_avg = sum(t_values) / len(t_values)
+    print('T_avg={}'.format(t_avg))
+    if args.output_log:
+        with open(args.output_log, 'w') as f:
+            json.dump(results, f)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Transportation problems solver')
     parser.add_argument('--problems_dir', type=str, default='./problems')
     parser.add_argument('--branch_strategy', type=str, choices=branch_strategies, default='breadth-first')
+    parser.add_argument('--output_log', type=str, default='')
     parser.add_argument('--verbose', action='store_true', help='Print additional info to console')
 
     main(parser.parse_args())
