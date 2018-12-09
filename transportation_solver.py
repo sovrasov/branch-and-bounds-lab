@@ -1,6 +1,7 @@
 import argparse
 import os
 import queue
+import math
 
 from utils import load_problem
 
@@ -103,8 +104,7 @@ def solve_transportation(problem, branch_strategy='breadth-first'):
                 if not (lower >= best_upper_bound):
                     vertexes.put((v, lower, upper))
 
-    print('Iterations performed: {}'.format(iters))
-    return best_point[1], best_point[0]
+    return best_point[1], best_point[0], iters
 
 def main(args):
     problems = []
@@ -113,10 +113,15 @@ def main(args):
             problems.append(load_problem(os.path.join(args.problems_dir, file)))
 
     for problem in problems:
+        print('-'*100)
         print('Problem: ' + problem['name'])
-        value, order = solve_transportation(problem, args.branch_strategy)
+        value, order, iters = solve_transportation(problem, args.branch_strategy)
+        effectiveness = 1. - iters / math.factorial(problem['n'])
         print('Found solution: {}'.format(order))
         print('Criterion value: {}'.format(value))
+        print('T={}'.format(effectiveness))
+
+        assert value == problem['opt_value']
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Transportation problems solver')
