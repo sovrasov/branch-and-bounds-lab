@@ -126,7 +126,7 @@ def compute_upper_bound_greedy(v, problem):
         z, _ = compute_partial_objective(v_, problem)
         for beta in not_visited:
             t_d = problem['limits'][beta - 1]
-            t = z + problem['delays_matrix'][v[-1]][beta]
+            t = z + problem['delays_matrix'][v_[-1]][beta]
             if t > t_d:
                 w.append(float('inf'))
             else:
