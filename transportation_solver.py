@@ -2,6 +2,18 @@ import queue
 import math
 import abc
 
+FLT_INF = float('inf')
+
+class node:
+    def __init__(self, v=[], upper=FLT_INF, lower=FLT_INF, partial_obective=FLT_INF):
+        self.v = v
+        self.upper = upper
+        self.lower = lower
+        self.partial_objective = partial_obective
+
+    def __lt__(self, other):
+        return self.v < other.v
+
 class branch_strategy:
     def __init__(self):
         pass
@@ -56,7 +68,7 @@ class optimistic(branch_strategy):
         return v
 
     def put(self, v):
-        self.storage.put((v[1], v))
+        self.storage.put((v.lower, v))
 
 class realistic(branch_strategy):
     def __init__(self):
@@ -70,7 +82,7 @@ class realistic(branch_strategy):
         return v
 
     def put(self, v):
-        self.storage.put((v[2], v))
+        self.storage.put((v.upper, v))
 
 def compute_partial_objective(v, problem):
     assert v
@@ -140,41 +152,41 @@ def solve_transportation(problem, branch_strategy='breadth-first',
                          compute_lower_bound=compute_lower_bound_parallel,
                          compute_upper_bound=compute_upper_bound_greedy):
     if branch_strategy == 'breadth-first':
-        vertexes = breadth_first()
+        nodes = breadth_first()
     elif branch_strategy == 'depth-first':
-        vertexes = depth_first()
+        nodes = depth_first()
     elif branch_strategy == 'optim':
-        vertexes = optimistic()
+        nodes = optimistic()
     elif branch_strategy == 'real':
-        vertexes = realistic()
+        nodes = realistic()
 
     n = problem['n']
-    vertexes.put(([], n, n))
-    best_point = ([], n, n)
+    nodes.put(node([], n, n))
+    best_point = node([], n, n)
     best_upper_bound = n
     iters = 0
 
-    while not vertexes.empty():
+    while not nodes.empty():
         iters += 1
-        v = vertexes.get()
+        vertex = nodes.get()
 
-        if len(v[0]) == n:
-            assert v[1] == v[2]
-            if v[1] < best_point[1]:
-                best_point = v
+        if len(vertex.v) == n:
+            assert vertex.lower == vertex.upper
+            if vertex.lower < best_point.lower:
+                best_point = vertex
         else:
-            new_v = branch(v[0], n)
+            new_v = branch(vertex.v, n)
             for v in new_v:
                 lower = compute_lower_bound(v, problem)
                 if len(v) < n:
                     v_, upper = compute_upper_bound(v, problem)
                     assert len(v_) == n
-                    if upper < best_point[1]:
-                        best_point = (v_, upper, upper)
+                    if upper < best_point.lower:
+                        best_point = node(v_, upper, upper)
                 else:
                     upper = lower
                 best_upper_bound = min(best_upper_bound, upper)
                 if not (lower >= best_upper_bound):
-                    vertexes.put((v, lower, upper))
+                    nodes.put(node(v, lower, upper))
 
-    return best_point[1], best_point[0], iters
+    return best_point.lower, best_point.v, iters
