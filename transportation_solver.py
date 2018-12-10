@@ -89,18 +89,18 @@ def compute_partial_objective(v, problem):
     assert v
 
     objective = 0
-    time = problem['delays_matrix'][0][v[0]]
-    if time > problem['limits'][v[0] - 1]:
+    time = problem.delays_matrix[0][v[0]]
+    if time > problem.limits[v[0] - 1]:
         objective += 1
     for i in range(1, len(v)):
-        time += problem['delays_matrix'][v[i - 1]][v[i]]
-        if time > problem['limits'][v[i] - 1]:
+        time += problem.delays_matrix[v[i - 1]][v[i]]
+        if time > problem.limits[v[i] - 1]:
             objective += 1
 
     return time, objective
 
 def compute_objective(v, problem):
-    assert len(v) == problem['n']
+    assert len(v) == problem.n
     return compute_partial_objective(v, problem)[1]
 
 def update_partial_opjective(vertex, problem):
@@ -108,42 +108,42 @@ def update_partial_opjective(vertex, problem):
 
     t = len(vertex.v) - 1
     if t == 0:
-        vertex.partial_time = problem['delays_matrix'][0][vertex.v[0]]
+        vertex.partial_time = problem.delays_matrix[0][vertex.v[0]]
         vertex.partial_objective = 0
     else:
-        vertex.partial_time += problem['delays_matrix'][vertex.v[t - 1]][vertex.v[t]]
-    if vertex.partial_time > problem['limits'][vertex.v[t] - 1]:
+        vertex.partial_time += problem.delays_matrix[vertex.v[t - 1]][vertex.v[t]]
+    if vertex.partial_time > problem.limits[vertex.v[t] - 1]:
         vertex.partial_objective += 1
 
     return vertex
 
 def compute_lower_bound_parallel(vertex, problem):
-    if len(vertex.v) == problem['n']:
+    if len(vertex.v) == problem.n:
         return vertex.partial_obective
 
-    not_visited = list(problem['feasible_coordinates'] - set(vertex.v))
+    not_visited = list(problem.feasible_coordinates - set(vertex.v))
     time = vertex.partial_time
     objective = vertex.partial_objective
 
     for i in not_visited:
-        if time + problem['delays_matrix'][vertex.v[-1]][i] > problem['limits'][i - 1]:
+        if time + problem.delays_matrix[vertex.v[-1]][i] > problem.limits[i - 1]:
             objective += 1
 
     return objective
 
 def compute_upper_bound_greedy(vertex, problem):
-    if len(vertex.v) == problem['n']:
+    if len(vertex.v) == problem.n:
         return vertex.partial_obective
 
     greedy_v = node(list(vertex.v), partial_objective=vertex.partial_objective, partial_time=vertex.partial_time)
-    not_visited = list(problem['feasible_coordinates'] - set(greedy_v.v))
+    not_visited = list(problem.feasible_coordinates - set(greedy_v.v))
 
-    while len(greedy_v.v) < problem['n']:
+    while len(greedy_v.v) < problem.n:
         w = [FLT_INF]*len(not_visited)
         z = greedy_v.partial_time
         for i, beta in enumerate(not_visited):
-            t_d = problem['limits'][beta - 1]
-            t = z + problem['delays_matrix'][greedy_v.v[-1]][beta]
+            t_d = problem.limits[beta - 1]
+            t = z + problem.delays_matrix[greedy_v.v[-1]][beta]
             if t <= t_d:
                 w[i] = t_d - t
         best_idx = w.index(min(w))
@@ -154,8 +154,8 @@ def compute_upper_bound_greedy(vertex, problem):
     return greedy_v.v, greedy_v.partial_objective
 
 def branch(vertex, problem):
-    assert len(vertex.v) < problem['n']
-    not_visited = list(problem['feasible_coordinates'] - set(vertex.v))
+    assert len(vertex.v) < problem.n
+    not_visited = list(problem.feasible_coordinates - set(vertex.v))
     new_nodes = [node()]*len(not_visited)
 
     for i, idx in enumerate(not_visited):
@@ -177,7 +177,7 @@ def solve_transportation(problem, branch_strategy='breadth-first',
     elif branch_strategy == 'real':
         nodes = realistic()
 
-    n = problem['n']
+    n = problem.n
     nodes.put(node([], n, n))
     best_point = node([], n, n)
     best_upper_bound = n

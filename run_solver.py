@@ -17,24 +17,24 @@ def main(args):
     t_values = []
     for problem in problems:
         print('-'*100)
-        print('Problem: ' + problem['name'])
+        print('Problem: ' + problem.name)
         start = time.time()
         value, order, iters = solve_transportation(problem, args.branch_strategy)
         end = time.time()
-        t_values.append(1. - float(iters) / math.factorial(problem['n']))
+        t_values.append(1. - float(iters) / math.factorial(problem.n))
         print('Found solution: {}'.format(order))
         print('Criterion value: {}'.format(value))
         print('T={}'.format(t_values[-1]))
         print('Iterations performed {}'.format(iters))
         print('Time elapsed {}'.format(end - start))
 
-        results.append({'problem_name': problem['name'],
+        results.append({'problem_name': problem.name,
                         'opt_value': value,
                         'solution': order,
                         'iteations': iters,
                         'T': t_values[-1]})
 
-        assert value == problem['opt_value']
+        assert value == problem.opt_value
 
     t_avg = sum(t_values) / len(t_values)
     print('T_avg={}'.format(t_avg))
