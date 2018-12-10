@@ -17,6 +17,7 @@ def load_problem(path):
             problem['delays_matrix'].append(list_to_ints(data[2 + i].split()))
         problem['opt_solution'] = list_to_ints(data[problem['n'] + 3].split())
         problem['opt_value'] = int(data[-1])
+        problem['feasible_coordinates'] = set(range(1, problem['n'] + 1))
 
         return problem
 
