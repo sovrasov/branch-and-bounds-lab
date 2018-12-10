@@ -1,6 +1,6 @@
-import queue
 import math
 import abc
+from heapq import *
 
 FLT_INF = float('inf')
 
@@ -33,57 +33,57 @@ class branch_strategy:
 
 class breadth_first(branch_strategy):
     def __init__(self):
-        self.storage = queue.Queue()
+        self.storage = []
 
     def put(self, v):
-        self.storage.put(v)
+        self.storage.append(v)
 
     def get(self):
-        return self.storage.get()
+        return self.storage.pop(0)
 
     def empty(self):
-        return self.storage.empty()
+        return len(self.storage) == 0
 
 class depth_first(branch_strategy):
     def __init__(self):
-        self.storage = queue.LifoQueue()
+        self.storage = []
 
     def put(self, v):
-        self.storage.put(v)
+        self.storage.append(v)
 
     def get(self):
-        return self.storage.get()
+        return self.storage.pop()
 
     def empty(self):
-        return self.storage.empty()
+        return len(self.storage) == 0
 
 class optimistic(branch_strategy):
     def __init__(self):
-        self.storage = queue.PriorityQueue()
+        self.storage = []
 
     def empty(self):
-        return self.storage.empty()
+        return len(self.storage) == 0
 
     def get(self):
-        key, v = self.storage.get()
+        key, v = heappop(self.storage)
         return v
 
     def put(self, v):
-        self.storage.put((v.lower, v))
+        heappush(self.storage, (v.lower, v))
 
 class realistic(branch_strategy):
     def __init__(self):
-        self.storage = queue.PriorityQueue()
+        self.storage = []
 
     def empty(self):
-        return self.storage.empty()
+        return len(self.storage) == 0
 
     def get(self):
-        key, v = self.storage.get()
+        key, v = heappop(self.storage)
         return v
 
     def put(self, v):
-        self.storage.put((v.upper, v))
+        heappush(self.storage, (v.upper, v))
 
 def compute_partial_objective(v, problem):
     assert v
