@@ -2,6 +2,7 @@ import argparse
 import os
 import math
 import json
+import time
 
 from utils import load_problem
 from transportation_solver import solve_transportation, branch_strategies
@@ -17,12 +18,15 @@ def main(args):
     for problem in problems:
         print('-'*100)
         print('Problem: ' + problem['name'])
+        start = time.time()
         value, order, iters = solve_transportation(problem, args.branch_strategy)
+        end = time.time()
         t_values.append(1. - float(iters) / math.factorial(problem['n']))
         print('Found solution: {}'.format(order))
         print('Criterion value: {}'.format(value))
         print('T={}'.format(t_values[-1]))
         print('Iterations performed {}'.format(iters))
+        print('Time elapsed {}'.format(end - start))
 
         results.append({'problem_name': problem['name'],
                         'opt_value': value,
