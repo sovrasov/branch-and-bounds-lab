@@ -156,8 +156,7 @@ def compute_upper_bound_greedy(vertex, problem):
             if t <= t_d:
                 w[i] = t_d - t
         best_idx = w.index(min(w))
-        greedy_v.v.append(not_visited[best_idx])
-        not_visited.pop(best_idx)
+        greedy_v.v.append(not_visited.pop(best_idx))
         greedy_v = update_partial_opjective(greedy_v, problem)
 
     return greedy_v.v, greedy_v.partial_objective

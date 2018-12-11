@@ -30,7 +30,7 @@ def main(args):
         start = time.time()
         value, order, iters = solve_transportation(problem, args.branch_strategy)
         end = time.time()
-        t_values.append(float(iters) / math.factorial(problem.n) - 1.)
+        t_values.append(1. - float(iters) / math.factorial(problem.n))
         print('Found solution: {}'.format(order))
         print('Criterion value: {}'.format(value))
         print('T={}'.format(t_values[-1]))
@@ -56,6 +56,5 @@ if __name__ == '__main__':
     parser.add_argument('--problems_dir', type=str, default='./problems')
     parser.add_argument('--branch_strategy', type=str, choices=branch_strategies, default='breadth-first')
     parser.add_argument('--output_log', type=str, default='')
-    parser.add_argument('--verbose', action='store_true', help='Print additional info to console')
 
     main(parser.parse_args())
