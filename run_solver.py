@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+'''
+Copyright (C) 2018 Sovrasov V. - All Rights Reserved
+ * You may use, distribute and modify this code under the
+ * terms of the MIT license.
+ * You should have received a copy of the MIT license with
+ * this file. If not visit https://opensource.org/licenses/MIT
+'''
 import argparse
 import os
 import math
@@ -21,7 +30,7 @@ def main(args):
         start = time.time()
         value, order, iters = solve_transportation(problem, args.branch_strategy)
         end = time.time()
-        t_values.append(1. - float(iters) / math.factorial(problem.n))
+        t_values.append(float(iters) / math.factorial(problem.n) - 1.)
         print('Found solution: {}'.format(order))
         print('Criterion value: {}'.format(value))
         print('T={}'.format(t_values[-1]))
@@ -31,7 +40,7 @@ def main(args):
         results.append({'problem_name': problem.name,
                         'opt_value': value,
                         'solution': order,
-                        'iteations': iters,
+                        'iterations': iters,
                         'T': t_values[-1]})
 
         assert value == problem.opt_value
