@@ -30,17 +30,17 @@ def main(args):
 
     for capture in columns[1:]:
         for item in all_stats[capture]:
-            rows[item['problem_name']].append(str(item['T']) + '(' + str(item['iterations']) + ')')
+            rows[item['problem_name']].append(str(round(item['T'], 11)) + '(' + str(item['iterations']) + ')')
             avg_t[capture] += item['T']
         avg_t[capture] /= len(all_stats[capture])
 
     table_rows = []
     for problem_name in sorted(rows.keys()):
-        table_rows.append([problem_name] + rows[problem_name])
+        table_rows.append([problem_name.split('_')[-1]] + rows[problem_name])
 
-    last_row = ['$T_{avg}$']
+    last_row = [r'$T_{avg}$']
     for capture in columns[1:]:
-        last_row.append(avg_t[capture])
+        last_row.append(str(round(avg_t[capture], 11)))
     table_rows.append(last_row)
 
     table = tabulate(table_rows, headers=columns, tablefmt='latex', numalign='center')
