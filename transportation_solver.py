@@ -14,7 +14,8 @@ from heapq import *
 FLT_INF = float('inf')
 
 class node:
-    def __init__(self, v=[], upper=FLT_INF, lower=FLT_INF, partial_objective=FLT_INF, partial_time=0):
+    def __init__(self, v=[], upper=FLT_INF, lower=FLT_INF, \
+                 partial_objective=FLT_INF, partial_time=0):
         self.v = v
         self.upper = upper
         self.lower = lower
@@ -144,7 +145,8 @@ def compute_upper_bound_greedy(vertex, problem):
     if len(vertex.v) == problem.n:
         return vertex.partial_obective
 
-    greedy_v = node(list(vertex.v), partial_objective=vertex.partial_objective, partial_time=vertex.partial_time)
+    greedy_v = node(list(vertex.v), partial_objective=vertex.partial_objective, \
+                    partial_time=vertex.partial_time)
     not_visited = list(problem.feasible_coordinates - set(greedy_v.v))
 
     while len(greedy_v.v) < problem.n:
@@ -167,7 +169,8 @@ def branch(vertex, problem):
     new_nodes = [node()]*len(not_visited)
 
     for i, idx in enumerate(not_visited):
-        new_nodes[i] = node(vertex.v + [idx], vertex.upper, vertex.lower, vertex.partial_objective, vertex.partial_time)
+        new_nodes[i] = node(vertex.v + [idx], vertex.upper, vertex.lower, \
+                            vertex.partial_objective, vertex.partial_time)
 
     return new_nodes
 
@@ -205,10 +208,12 @@ def solve_transportation(problem, branch_strategy='breadth-first',
                 new_vertex = update_partial_opjective(new_vertex, problem)
                 new_vertex.lower = compute_lower_bound(new_vertex, problem)
                 if len(new_vertex.v) < n:
-                    greedy_solution, new_vertex.upper = compute_upper_bound(new_vertex, problem)
+                    greedy_solution, new_vertex.upper = \
+                        compute_upper_bound(new_vertex, problem)
                     assert len(greedy_solution) == n
                     if new_vertex.upper < best_point.lower:
-                        best_point = node(greedy_solution, new_vertex.upper, new_vertex.upper)
+                        best_point = node(greedy_solution, new_vertex.upper,
+                                          new_vertex.upper)
                 else:
                     new_vertex.upper = new_vertex.lower
                 best_upper_bound = min(best_upper_bound, new_vertex.upper)
